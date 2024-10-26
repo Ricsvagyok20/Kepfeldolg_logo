@@ -1,7 +1,7 @@
 import cv2 as cv
 
 def chamfer_template():
-    template_image = cv.imread('assets/logos/honda/honda_logo_main_for_chamfer.png')
+    template_image = cv.imread('../assets/logos/honda/honda_logo_main_for_chamfer.png')
     grayscale_template = cv.cvtColor(template_image, cv.COLOR_BGR2GRAY)
     template_edges = cv.Canny(grayscale_template, 300, 550) #Itt majd ezeket a paramétereket lehet állítani
 
