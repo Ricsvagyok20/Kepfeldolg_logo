@@ -1,10 +1,9 @@
-from tempfile import template
-
 import cv2 as cv
 import numpy as np
 
 from chamfer_matching.template import chamfer_template
 from chamfer_matching.template import generate_scaled_templates
+from chamfer_matching.resize import resize_with_aspect_ratio
 
 
 def load_images(image_paths):
@@ -14,21 +13,6 @@ def load_images(image_paths):
         images.append(image)
     return images
 
-def resize_with_aspect_ratio(image, target_size):
-    h, w = image.shape[:2]
-
-    # Determine the scaling factor based on the longest side
-    if h > w:
-        new_h = target_size
-        new_w = int(w * (target_size / h))
-    else:
-        new_w = target_size
-        new_h = int(h * (target_size / w))
-
-    resized_image = cv.resize(image, (new_w, new_h), interpolation=cv.INTER_AREA)
-    return resized_image
-
-
 def preprocess_chamfer(image):
     # Szürkeárnyalatos konverzió
     gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
@@ -37,42 +21,57 @@ def preprocess_chamfer(image):
     edges = cv.Canny(gray_image, 250, 600)
 
     # Binarizálás
-    _, binary_image = cv.threshold(edges, 127, 255, cv.THRESH_BINARY)
+    _, binary_image = cv.threshold(edges, 0, 255, cv.THRESH_BINARY)
     return binary_image
 
 
 def chamfer_match(template, learning_image):
-    # Compute the distance transform on the learning image
-    distance_map = cv.distanceTransform(learning_image, cv.DIST_L2, 3)
+    dist_transform = cv.distanceTransform(cv.bitwise_not(learning_image), cv.DIST_L2, 3)
 
-    # Visualize the Chamfer matching score map
-    # cv.imshow("Template", template)
-    # print("Visualizing Matching Score Map...")
-    # matching_score = visualize_matching_score(distance_map, learning_image)
+    # Sliding window Chamfer matching
+    h, w = template.shape
+    min_distance = float('inf')
+    best_location = (0, 0)
 
-    # Perform Chamfer matching by sliding the template
-    matching_score = cv.filter2D(distance_map, -1, template.astype(np.float32))
+    for y in range(learning_image.shape[0] - h + 1):
+        for x in range(learning_image.shape[1] - w + 1):
+            # Extract the window from the distance transform that matches the template's size
+            roi = dist_transform[y:y + h, x:x + w]
 
-    # Find the location of the best match
-    min_val, max_val, min_loc, max_loc = cv.minMaxLoc(matching_score)
-    return min_val, min_loc
+            # Mask out non-edges in the template for distance summing
+            dist_sum = np.sum(roi[template > 0])
+
+            # Check if we found a closer match
+            if dist_sum < min_distance:
+                min_distance = dist_sum
+                best_location = (x, y)
+
+    # print("Best match location:", best_location)
+    # print("Minimum Chamfer distance:", min_distance)
+
+    #Normalizálom a scoret, segített
+    min_distance /= h * w
+
+    return min_distance, best_location
 
 
 def process_images(image_paths, template_path):
     images = load_images(image_paths)
     processed_images = []
 
-    binary_template_original = chamfer_template(template_path)
-    binary_template = resize_with_aspect_ratio(binary_template_original, 256)
+    binary_template = chamfer_template(template_path)
 
     for image in images:
         # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
         image = resize_with_aspect_ratio(image, 512)
         binary_image = preprocess_chamfer(image)
 
-        cv.imshow("Chamfer template", binary_template)
-
-        cv.imshow("New image binary", binary_image)
+        # cv.imshow("Chamfer template", binary_template)
+        #
+        # cv.imshow("New image binary", binary_image)
+        #
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
 
         best_score = float('inf')
         best_location = None
