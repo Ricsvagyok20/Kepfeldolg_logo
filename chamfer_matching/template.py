@@ -7,11 +7,13 @@ def chamfer_template(image_path):
     template_image = cv.imread(image_path)
     template_image = resize_with_aspect_ratio(template_image, 512)
     grayscale_template = cv.cvtColor(template_image, cv.COLOR_BGR2GRAY)
-    template_edges = cv.Canny(grayscale_template, 300, 550)
+    template_edges = cv.Canny(grayscale_template, 200, 300) # Jó lenne megérteni hogy működik ez, mert most 200 300-al sokkal jobb peugeot template készül
 
     _, binary_template = cv.threshold(template_edges, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
-    cv.imwrite('assets/chamfer_templates/honda_chamfer_template.png', binary_template)
+    name = image_path.split('/')[2]
+
+    cv.imwrite('assets/chamfer_templates/' + name + '_chamfer_template.png', binary_template)
 
     return binary_template
 

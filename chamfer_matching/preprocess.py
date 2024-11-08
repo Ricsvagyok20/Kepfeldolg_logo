@@ -24,7 +24,9 @@ def preprocess_chamfer(image):
     gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
     # Éldetektálás
-    edges = cv.Canny(gray_image, 250, 600)
+    edges = cv.Canny(gray_image, 200, 400) # Lehet itt is akkor valami 200-300hoz hasonló mehetne
+    # 250-600-al elég jó a 200-300 néhol segít, de a túl sok él is gondot okoz
+    # 200-400 nem rossz, 200-300 se rossz
 
     # Binarizálás
     _, binary_image = cv.threshold(edges, 0, 255, cv.THRESH_BINARY)
