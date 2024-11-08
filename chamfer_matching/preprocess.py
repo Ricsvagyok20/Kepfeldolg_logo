@@ -25,7 +25,7 @@ def preprocess_chamfer(image):
     gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
     # Éldetektálás
-    edges = cv.Canny(gray_image, 200, 400) # Lehet itt is akkor valami 200-300hoz hasonló mehetne
+    edges = cv.Canny(gray_image, 200, 500) # Lehet itt is akkor valami 200-300hoz hasonló mehetne
     # 250-600-al elég jó a 200-300 néhol segít, de a túl sok él is gondot okoz
     # 200-400 nem rossz, 200-300 se rossz
 
@@ -67,7 +67,8 @@ def process_images(image_paths, template_path):
 
     for image in images:
         # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
-        binary_image = preprocess_chamfer(resize_with_aspect_ratio(image, 512))
+        image = resize_with_aspect_ratio(image, 512)
+        binary_image = preprocess_chamfer(image)
 
         # cv.imshow("Chamfer template", binary_template)
         # cv.imshow("New image binary", binary_image)
