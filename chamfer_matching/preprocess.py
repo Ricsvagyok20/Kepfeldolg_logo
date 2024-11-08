@@ -6,6 +6,12 @@ from chamfer_matching.template import generate_scaled_templates
 from chamfer_matching.resize import resize_with_aspect_ratio
 
 
+def pad_image(image, target_shape):
+    pad_height = target_shape[0] - image.shape[0]
+    pad_width = target_shape[1] - image.shape[1]
+    return np.pad(image, ((0, pad_height), (0, pad_width), (0, 0)), mode='constant')
+
+
 def load_images(image_paths):
     images = []
     for path in image_paths:
@@ -63,13 +69,12 @@ def process_images(image_paths, template_path):
 
     for image in images:
         # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
+
         image = resize_with_aspect_ratio(image, 512)
         binary_image = preprocess_chamfer(image)
 
         # cv.imshow("Chamfer template", binary_template)
-        #
         # cv.imshow("New image binary", binary_image)
-        #
         # cv.waitKey(0)
         # cv.destroyAllWindows()
 
@@ -104,4 +109,16 @@ def process_images(image_paths, template_path):
 
         processed_images.append(matched_region)
 
-    return np.array(processed_images)
+    # Determine the target shape based on the largest image in processed_images
+    max_height = max(img.shape[0] for img in processed_images)
+    max_width = max(img.shape[1] for img in processed_images)
+    target_shape = (max_height, max_width, 3)  # Assuming 3 channels (RGB)
+
+    # Pad all images to the target shape
+    padded_images = [pad_image(img, target_shape) for img in processed_images]
+
+    return_images = np.array(padded_images)
+
+    return_images = return_images / 255.0
+
+    return return_images
