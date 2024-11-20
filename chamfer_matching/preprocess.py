@@ -68,6 +68,9 @@ def process_images(image_paths, template_path):
     processed_images = []
 
     binary_template = chamfer_template(template_path)
+    cv.imshow("Chamfer template", binary_template)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
     for image in images:
         # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
@@ -104,10 +107,10 @@ def process_images(image_paths, template_path):
         matched_region = image[top_left[1]:top_left[1] + h, top_left[0]:top_left[0] + w]
 
         # Display the result
-        cv.imshow("Best Match", image)
-        cv.imshow("Matched Region", matched_region)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        # cv.imshow("Best Match", image)
+        # cv.imshow("Matched Region", matched_region)
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
 
         processed_images.append(matched_region)
 

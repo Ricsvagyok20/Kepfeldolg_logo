@@ -1,8 +1,24 @@
+import cv2
+
 import config
 
 from chamfer_matching.preprocess import process_images
 
 # Fő program
-image_paths = [path for sublist in config.LOGO_PATHS for path in sublist]  # Egyesítjük az összes útvonalat egy listába
-template_path = 'assets/logos/honda/honda_logo_main_for_chamfer.jpg'
-processed_images = process_images(image_paths, template_path)
+processed_images = []
+
+# Iterate through each logo path and its corresponding template
+for logo_group in config.LOGO_PATHS_WITH_TEMPLATES:
+    logo_paths = logo_group['logo_paths']
+    template_path = logo_group['template_path']
+
+    # Process images for the current logo group
+    group_processed_images = process_images(logo_paths, template_path)
+    processed_images.extend(group_processed_images)
+
+# img = cv2.imread('assets/logos/nike/nike_logo_pure.jpg')
+# cv2.imshow("asd", img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+print(len(processed_images))

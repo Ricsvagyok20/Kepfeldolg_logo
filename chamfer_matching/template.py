@@ -20,11 +20,7 @@ def chamfer_template(image_path):
 
 def generate_scaled_templates(template, scales=[0.25, 0.5, 0.75, 1.0]):
     # Generate resized templates based on given scales
-    # Érdekes tanulság, hogy mivel különböző képeken különböző méretekben van a logó eredetileg
-    # Ezért ha pl nincs 0.25ös akkor ahol nagyobb a logó sokkal jobban megtalálja a logót, de ha van 0.25 akkor talál fals helyeket
-    # Báááár most az jutott eszembe, hogy mivan, ha azért lesz kicsi a sum, mert sokkal kevesebb értéket hasonlít össze kisebb template esetén
-    # Meg kéne próbálni mondjuk leosztani a scoret a width * height-al
-    # Esetleg, hogy még biztosabb legyen a dolog vagy így mostmár több scalet beletenni vagy kicsit nagyobb képet kivágni mint a matchelt terület
+    # Az a helyzet h tök jó kísérletezni kisebb scalekkel csak akkor a canny-t állítani kéne a feldolgozott képeken valsz way too many él kerül detektálásra
     templates = []
     for scale in scales:
         resized_template = resize_with_aspect_ratio(template, 512*scale)
