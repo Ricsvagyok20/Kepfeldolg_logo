@@ -68,9 +68,9 @@ def process_images(image_paths, template_path):
     processed_images = []
 
     binary_template = chamfer_template(template_path)
-    cv.imshow("Chamfer template", binary_template)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.imshow("Chamfer template", binary_template)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
 
     for image in images:
         # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
