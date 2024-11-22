@@ -4,7 +4,7 @@ from preprocess import load_and_preprocess_image
 
 # Képek előfeldolgozása
 logo_image = load_and_preprocess_image('./../assets/logos/nike/nike_logo_pure.jpg', target_size=300)
-target_image = load_and_preprocess_image('./../assets/logos/nike/nike_logo_12.jpg', target_size=800)
+target_image = load_and_preprocess_image('./../assets/logos/nike/nike_logo_21.jpg', target_size=800)
 
 # AKAZE objektum létrehozása
 akaze = cv2.AKAZE_create()
