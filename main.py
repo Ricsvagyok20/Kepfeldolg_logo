@@ -1,7 +1,12 @@
 import config
+import numpy as np
+import tkinter as tk
 
 from chamfer_matching.preprocess import process_images
 from chamfer_matching.resize import resize_with_aspect_ratio
+from PIL import Image, ImageTk
+from sklearn.model_selection import train_test_split
+from chamfer_matching.cnn_model import build_model, train_model, predict_image
 
 # Fő program
 image_paths = []
@@ -15,16 +20,9 @@ for logo_group in config.LOGO_PATHS_WITH_TEMPLATES:
 
     # Process images for the current logo group
     group_processed_images = process_images(logo_paths, template_path)
-    processed_images.extend(group_processed_images)
+    processed_images.append(group_processed_images)
 
-import numpy as np
-import random
-import tkinter as tk
-from tkinter import Label, Button
-from PIL import Image, ImageTk
-from sklearn.model_selection import train_test_split
-from chamfer_matching.cnn_model import build_model, train_model, predict_image
-
+processed_images = np.concatenate(processed_images, axis=0)
 
 # Címkék generálása
 labels = np.array([0 if i < len(processed_images) // 2 else 1 for i in range(len(processed_images))])
@@ -51,8 +49,8 @@ root.title("Test Set Predictions")
 for i, img_path in enumerate(image_paths_test):
     # Load the original image from the file path
     original_image = Image.open(img_path)
-    # original_image = original_image.resize((128, 128), Image.Resampling.LANCZOS)
-    original_image = resize_with_aspect_ratio(original_image, 128)
+    original_image = original_image.resize((128, 128), Image.Resampling.LANCZOS)
+    # original_image = resize_with_aspect_ratio(original_image, 128) Itt az a baj, hogy a size a neve annak ami shape a resize_with aspect etc.
     image_tk = ImageTk.PhotoImage(original_image)
 
     # Get prediction for the image

@@ -35,6 +35,7 @@ def preprocess_chamfer(image):
 
 def chamfer_match(template, learning_image):
     dist_transform = cv.distanceTransform(cv.bitwise_not(learning_image), cv.DIST_L2, 3)
+    # dist_transform = dist_transform.astype(np.float32)
 
     # Sliding window Chamfer matching
     h, w = template.shape
@@ -73,13 +74,16 @@ def process_images(image_paths, template_path):
     # cv.destroyAllWindows()
 
     for image in images:
-        # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
+#     for i in range(len(images)):
+#         image = images[i]
 
+        # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
         image = resize_with_aspect_ratio(image, 512)
         binary_image = preprocess_chamfer(image)
 
         # cv.imshow("Chamfer template", binary_template)
         # cv.imshow("New image binary", binary_image)
+        # print(i)
         # cv.waitKey(0)
         # cv.destroyAllWindows()
 
@@ -96,6 +100,9 @@ def process_images(image_paths, template_path):
                 best_template_size = scaled_template.shape
 
         # Draw a circle or bounding box around the best match on the original image
+        if(best_template_size is None):
+            continue
+
         top_left = best_location
         h, w = best_template_size
         bottom_right = (top_left[0] + w, top_left[1] + h)
@@ -114,10 +121,7 @@ def process_images(image_paths, template_path):
 
         processed_images.append(matched_region)
 
-    # Determine the target shape based on the largest image in processed_images
-    max_height = max(img.shape[0] for img in processed_images)
-    max_width = max(img.shape[1] for img in processed_images)
-    target_shape = (max_height, max_width, 3)  # Assuming 3 channels (RGB)
+    target_shape = (512, 512, 3)  # Assuming 3 channels (RGB)
 
     # Pad all images to the target shape
     padded_images = [pad_image(img, target_shape) for img in processed_images]
