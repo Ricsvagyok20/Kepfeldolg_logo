@@ -2,12 +2,24 @@ import cv2
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from pureObject import pureObject
 
-def preprocess_image(image_path):
-    image = cv2.imread(image_path)
+def preprocess_image(image):
     if image is None:
-        print(f"Error loading image: {image_path}")
         return None
+
+    h, w = image.shape[:2]
+    target_width, target_height = 400,400
+    
+    # Compute the scaling factor
+    scale = min(target_width / w, target_height / h)
+    
+    # Calculate new dimensions
+    new_width = int(w * scale)
+    new_height = int(h * scale)
+    
+    # Resize the image
+    image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)      
     struct = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
@@ -21,26 +33,8 @@ def preprocess_image(image_path):
 
     return image
 
-def detect_keypoints(image):
-
-
-    #orb
-    #detector = cv2.ORB_create()
-
-    #sift
-    #sift = cv2.SIFT_create()
-
-    #akaze
+"""def detect_keypoints(image):
     akaze = cv2.AKAZE_create()
-
-
-    #orb
-    #keypoints, descriptors = detector.detectAndCompute(image, None)
-
-    #sift
-    #keypoints, descriptors = sift.detectAndCompute(image, None)
-
-    #akaze
     keypoints, descriptors = akaze.detectAndCompute(image, None)
 
     strong_keypoints = [kp for kp in keypoints if kp.response > 0]
@@ -48,76 +42,126 @@ def detect_keypoints(image):
     
     return strong_keypoints, descriptors
 
-def match_against_pure(pure_image, pure_keypoints, pure_descriptors, image, keypoints, descriptors, filename):
-    #orb
-    #bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-
-    #sift
-    #bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-
-    #akaze
+def match_against_pure(pure_descriptors, descriptors):
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
 
-    #orb, sift
-    #matches = bf.match(pure_descriptors, descriptors)
-
-    #akaze
     matches = bf.knnMatch(pure_descriptors, descriptors, k=2)
 
-    #matches = sorted(matches, key=lambda x: x.distance)
-
-    #orb, sift
-    #good_matches = [m for m in matches if m.distance < 300]
-
-    #akaze
-    good_matches = [m for m, n in matches if m.distance < 0.75 * n.distance]
+   
     match_quality = sum(1.0 / m.distance for m in good_matches) if good_matches else 0
-    return match_quality, good_matches
+    return match_quality, good_matches"""
+
+def detect_keypoints(image, response_threshold=0.002):
+    akaze = cv2.AKAZE_create()
+    keypoints, descriptors = akaze.detectAndCompute(image, None)
+    
+    print(f"Detected {len(keypoints)} keypoints")  # Debugging line
+    
+    # Filter keypoints based on their response
+    strong_keypoints = [kp for kp in keypoints if kp.response > response_threshold]
+    strong_descriptors = np.array([descriptors[i] for i, kp in enumerate(keypoints) if kp in strong_keypoints])
+
+    print(f"After filtering, {len(strong_keypoints)} keypoints remain")  # Debugging line
+    
+    return strong_keypoints, strong_descriptors
+
+
+def match_against_pure(pure_descriptors, descriptors):
+    if pure_descriptors is None or descriptors is None or len(pure_descriptors) == 0 or len(descriptors) == 0:
+        print("Descriptors are empty, no matching possible")
+        return 0, []  # Return no matches if descriptors are invalid
+
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+    # Perform knn matching
+    matches = bf.match(pure_descriptors, descriptors)
+
+    # Sort matches by distance
+    matches = sorted(matches, key=lambda x: x.distance)
+
+    # Calculate match quality as the average distance
+    match_quality = np.mean([m.distance for m in matches]) if matches else 0
+
+    return match_quality, matches
 
 
 
-def main():
-    # Kép mappájának megadása
+
+def predict_with_keypoint(image = None):
+
+
+    ##############################
+    production = False
+    ##############################
+
     image_directory = 'assets\\logos\\apple\\preproc'
     output_directory = 'keypoint_detection\\output_images'
 
+
     #tökéletes kép
-    pure_image = preprocess_image('assets/logos/apple/apple_pure.jpg')
-    pure_keypoints, pure_descriptors = detect_keypoints(pure_image)
+    pure_object = pureObject()
+    pure_image = preprocess_image(cv2.imread('assets/logos/apple/apple_pure.jpg'))
+    pure_object.logos["apple"]["keypoints"], pure_object.logos["apple"]["descriptors"] = detect_keypoints(pure_image)
+    pure_object.logos["apple"]["image"] = pure_image
 
-    pure_image_inv = cv2.bitwise_not(pure_image)
-    pure_keypoints_inv, pure_descriptors_inv = detect_keypoints(pure_image)
+    pure_image = preprocess_image(cv2.imread('assets/logos/honda/honda_logo_main_for_chamfer.jpg'))
+    pure_object.logos["honda"]["keypoints"], pure_object.logos["honda"]["descriptors"] = detect_keypoints(pure_image)
+    pure_object.logos["honda"]["image"] = pure_image
 
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+    pure_image = preprocess_image(cv2.imread('assets/logos/nike/nike_logo_pure.jpg'))
+    pure_object.logos["nike"]["keypoints"], pure_object.logos["nike"]["descriptors"] = detect_keypoints(pure_image)
+    pure_object.logos["nike"]["image"] = pure_image
 
-    # Képek feldolgozása a mappában
-    for filename in os.listdir(image_directory):
-        image_path = os.path.join(image_directory, filename)
-        processed_image = preprocess_image(image_path)
+    pure_image = preprocess_image(cv2.imread('assets/logos/peugeot/peugeot_logo_23.jpg'))
+    pure_object.logos["peugeot"]["keypoints"], pure_object.logos["peugeot"]["descriptors"] = detect_keypoints(pure_image)
+    pure_object.logos["peugeot"]["image"] = pure_image
 
+
+    if(production):
+        processed_image = preprocess_image(image)
         if processed_image is not None:
             keypoints, descriptors = detect_keypoints(processed_image)
-            pure, good_matches = match_against_pure(pure_image, pure_keypoints, pure_descriptors, processed_image, keypoints, descriptors, filename)
-            filename = 'inv' + filename 
-            inv, good_matches = match_against_pure(pure_image_inv, pure_keypoints_inv, pure_descriptors_inv, processed_image, keypoints, descriptors, filename)
+            for logo, data in pure_object.logos.items():
+                data["match_result"], data["matches"] = match_against_pure( data["descriptors"], descriptors)
 
-            if(pure > inv):
-                matched_img = cv2.drawMatches(pure_image, pure_keypoints, processed_image, keypoints, good_matches[:50], None, flags=2)
+            max_match_result = -float('inf')  
+            best_logo = None  
+            for logo, data in pure_object.logos.items():
+                if data["match_result"] > max_match_result:
+                    max_match_result = data["match_result"]
+                    best_logo = logo
+         
+            matched_img = cv2.drawMatches(pure_object.logos[best_logo]["image"], pure_object.logos[best_logo]["keypoints"], processed_image, keypoints, pure_object.logos[best_logo]["matches"][:50], None, flags=2)
+            return best_logo, matched_img
+    else:
+        if not os.path.exists(output_directory):
+            os.makedirs(output_directory)
+
+        for filename in os.listdir(image_directory):
+            image_path = os.path.join(image_directory, filename)
+            image = cv2.imread(image_path)
+            processed_image = preprocess_image(image)
+            if processed_image is not None:
+                keypoints, descriptors = detect_keypoints(processed_image)
+                for logo, data in pure_object.logos.items():
+                    data["match_result"], data["matches"] = match_against_pure( data["descriptors"], descriptors)
+
+                max_match_result = -float('inf')  
+                best_logo = None  
+                for logo, data in pure_object.logos.items():
+                    if data["match_result"] > max_match_result:
+                        max_match_result = data["match_result"]
+                        best_logo = logo
+         
+                matched_img = cv2.drawMatches(pure_object.logos[best_logo]["image"], pure_object.logos[best_logo]["keypoints"], processed_image, keypoints, pure_object.logos[best_logo]["matches"][:50], None, flags=2)
                 output_path = os.path.join('keypoint_detection\\output_images', f"matched_keypoints_{filename}")
                 cv2.imwrite(output_path, matched_img)
 
-            if(pure <= inv):
-                matched_img = cv2.drawMatches(pure_image_inv, pure_keypoints_inv, processed_image, keypoints, good_matches[:50], None, flags=2)
-                output_path = os.path.join('keypoint_detection\\output_images', f"matched_keypoints_{filename}")
-                cv2.imwrite(output_path, matched_img)
-
-            
-            
-
-
- 
     
 
+
+
+
 if __name__ == "__main__":
-    main()
+    predict_with_keypoint()
+
