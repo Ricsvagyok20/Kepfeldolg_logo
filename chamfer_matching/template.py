@@ -18,7 +18,7 @@ def chamfer_template(image_path):
     return binary_template
 
 
-def generate_scaled_templates(template, scales=[0.25, 0.5, 0.75, 1.0]):
+def generate_scaled_templates(template, scales=[0.1, 0.2, 0.25, 0.33, 0.5, 0.75, 1.0]):
     # Generate resized templates based on given scales
     # Az a helyzet h tök jó kísérletezni kisebb scalekkel csak akkor a canny-t állítani kéne a feldolgozott képeken valsz way too many él kerül detektálásra
     templates = []
