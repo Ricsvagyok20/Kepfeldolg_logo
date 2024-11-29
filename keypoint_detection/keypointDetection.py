@@ -168,8 +168,8 @@ def predict_with_keypoint(image = None):
     pure_object_chamfer.logos["nike"]["keypoints"], pure_object_chamfer.logos["nike"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["nike"]["image"] = pure_image
 
-    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/peugeot_chamfer_template.png'), False)
-    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/nike_chamfer_template.png'), False)
+    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/peugeot_chamfer_template.png'), False)
+    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/nike_chamfer_template.png'), False)
     pure_object_chamfer.logos["peugeot"]["keypoints"], pure_object_chamfer.logos["peugeot"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["peugeot"]["image"] = pure_image
 
@@ -222,10 +222,6 @@ def predict_with_keypoint(image = None):
                 matched_img = cv2.drawMatches(pure_object_chamfer.logos[best_logo]["image"], pure_object_chamfer.logos[best_logo]["keypoints"], processed_image, keypoints, pure_object_chamfer.logos[best_logo]["matches"][:50], None, flags=2)
                 output_path = os.path.join('keypoint_detection\\output_images', f"matched_keypoints_{filename}")
                 cv2.imwrite(output_path, matched_img)
-
-    
-
-
 
 
 if __name__ == "__main__":
