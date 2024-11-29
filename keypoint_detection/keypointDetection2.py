@@ -7,90 +7,69 @@ from pureObject import pureObject
 def preprocess_image(image):
     if image is None:
         return None
-
+    
     h, w = image.shape[:2]
-    target_width, target_height = 400,400
-    
-    # Compute the scaling factor
+    target_width, target_height = 400, 400
     scale = min(target_width / w, target_height / h)
-    
-    # Calculate new dimensions
     new_width = int(w * scale)
     new_height = int(h * scale)
-    
-    # Resize the image
     image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)      
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # Kontraszt javítás (CLAHE)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     image = clahe.apply(image)
 
-    # Zajszűrés (Gaussian blur)
     image = cv2.GaussianBlur(image, (5, 5), 0)
 
     return image
 
-"""def detect_keypoints(image):
-    akaze = cv2.AKAZE_create()
-    keypoints, descriptors = akaze.detectAndCompute(image, None)
 
-    strong_keypoints = [kp for kp in keypoints if kp.response > 0]
-    descriptors = np.array([descriptors[i] for i, kp in enumerate(keypoints) if kp in strong_keypoints])
-    
-    return strong_keypoints, descriptors
-
-def match_against_pure(pure_descriptors, descriptors):
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
-
-    matches = bf.knnMatch(pure_descriptors, descriptors, k=2)
-
-   
-    match_quality = sum(1.0 / m.distance for m in good_matches) if good_matches else 0
-    return match_quality, good_matches"""
-
-def detect_keypoints(image, response_threshold=0.002):
-    akaze = cv2.AKAZE_create()
+def detect_keypoints(image, response_threshold=0.002, max_keypoints=20):
+    akaze = cv2.AKAZE_create(threshold=0.01)
     keypoints, descriptors = akaze.detectAndCompute(image, None)
     
-    print(f"Detected {len(keypoints)} keypoints")  # Debugging line
-    
-    # Filter keypoints based on their response
-    #strong_keypoints = [kp for kp in keypoints if kp.response > response_threshold]
-    #strong_descriptors = np.array([descriptors[i] for i, kp in enumerate(keypoints) if kp in strong_keypoints])
+    if not keypoints or descriptors is None:
+        print("No keypoints detected")
+        return [], None
+
+    print(f"Detected {len(keypoints)} keypoints")
 
     sorted_keypoints = sorted(keypoints, key=lambda kp: kp.response, reverse=True)
 
-    # Keep only the top 10 keypoints
-    strong_keypoints = sorted_keypoints[:25]
+    strong_keypoints = sorted_keypoints[:max_keypoints]
 
-    # Retain descriptors corresponding to the strongest keypoints
-    strong_descriptors = np.array([descriptors[i] for i, kp in enumerate(keypoints) if kp in strong_keypoints])
+    strong_descriptors = descriptors[:len(strong_keypoints)]
 
+    print(f"After filtering, {len(strong_keypoints)} keypoints remain") 
 
-    print(f"After filtering, {len(strong_keypoints)} keypoints remain")  # Debugging line
-    
+    for i, kp in enumerate(strong_keypoints):
+        print(f"Keypoint {i}: Response = {kp.response}")
+
     return strong_keypoints, strong_descriptors
+
 
 
 def match_against_pure(pure_descriptors, descriptors):
     if pure_descriptors is None or descriptors is None or len(pure_descriptors) == 0 or len(descriptors) == 0:
         print("Descriptors are empty, no matching possible")
-        return 0, []  # Return no matches if descriptors are invalid
+        return 0, []
 
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    
+    matches = bf.knnMatch(pure_descriptors, descriptors, k=1)
 
-    # Perform knn matching
-    matches = bf.match(pure_descriptors, descriptors)
+    if not matches:
+        print("No matches found")
+        return 0, []
 
-    # Sort matches by distance
-    matches = sorted(matches, key=lambda x: x.distance)
+    matches = sorted(matches, key=lambda x: x[0].distance)  
 
-    # Calculate match quality as the average distance
-    match_quality = np.mean([m.distance for m in matches]) if matches else 0
+    match_quality = np.mean([m[0].distance for m in matches]) if matches else 0
 
     return match_quality, matches
+
+
 
 
 def get_best_matching_logo(pure1, pure2):
@@ -120,13 +99,11 @@ def get_best_matching_logo(pure1, pure2):
 
 
 def predict_with_keypoint(image = None):
-
-
     ##############################
     production = False
     ##############################
 
-    image_directory = 'assets\\logos\\honda'
+    image_directory = 'output_images'
     output_directory = 'keypoint_detection\\output_images'
 
 
@@ -137,11 +114,12 @@ def predict_with_keypoint(image = None):
     pure_object.logos["apple"]["keypoints"], pure_object.logos["apple"]["descriptors"] = detect_keypoints(pure_image)
     pure_object.logos["apple"]["image"] = pure_image
 
-    pure_image = preprocess_image(cv2.imread('assets/logos/honda/honda_logo_main_for_chamfer.jpg'))
-    #pure_image = preprocess_image(cv2.imread('assets/logos/apple/apple_pure.jpg'))
+    #pure_image = preprocess_image(cv2.imread('assets/logos/honda/honda_logo_main_for_chamfer.jpg'))
+    pure_image = preprocess_image(cv2.imread('assets/logos/apple/apple_pure.jpg'))
     pure_object.logos["honda"]["keypoints"], pure_object.logos["honda"]["descriptors"] = detect_keypoints(pure_image)
     pure_object.logos["honda"]["image"] = pure_image
 
+    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/nike_chamfer_template.png'))
     pure_image = preprocess_image(cv2.imread('assets/logos/nike/nike_logo_pure.jpg'))
     pure_object.logos["nike"]["keypoints"], pure_object.logos["nike"]["descriptors"] = detect_keypoints(pure_image)
     pure_object.logos["nike"]["image"] = pure_image
@@ -157,8 +135,8 @@ def predict_with_keypoint(image = None):
     pure_object_chamfer.logos["apple"]["keypoints"], pure_object_chamfer.logos["apple"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["apple"]["image"] = pure_image
 
-    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/honda_chamfer_template.png'))
-    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/apple_chamfer_template.png'))
+    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/honda_chamfer_template.png'))
+    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/apple_chamfer_template.png'))
     pure_object_chamfer.logos["honda"]["keypoints"], pure_object_chamfer.logos["honda"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["honda"]["image"] = pure_image
 
@@ -214,10 +192,10 @@ def predict_with_keypoint(image = None):
                         best_logo = logo
                  """
 
-                best_logo = get_best_matching_logo(pure_object_chamfer, pure_object_chamfer)
+                best_logo = get_best_matching_logo(pure_object_chamfer, pure_object)
 
 
-                matched_img = cv2.drawMatches(pure_object_chamfer.logos[best_logo]["image"], pure_object_chamfer.logos[best_logo]["keypoints"], processed_image, keypoints, pure_object_chamfer.logos[best_logo]["matches"][:50], None, flags=2)
+                matched_img = cv2.drawMatches(pure_object.logos[best_logo]["image"], pure_object.logos[best_logo]["keypoints"], processed_image, keypoints, pure_object.logos[best_logo]["matches"][:50], None, flags=2)
                 output_path = os.path.join('keypoint_detection\\output_images', f"matched_keypoints_{filename}")
                 cv2.imwrite(output_path, matched_img)
 
@@ -228,4 +206,3 @@ def predict_with_keypoint(image = None):
 
 if __name__ == "__main__":
     predict_with_keypoint()
-
