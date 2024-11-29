@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+#from keypoint_detection.pureObject import pureObject
 from pureObject import pureObject
 
-def preprocess_image(image):
+def preprocess_image(image, need_edges):
     if image is None:
         return None
 
@@ -29,6 +29,9 @@ def preprocess_image(image):
 
     # Zajszűrés (Gaussian blur)
     image = cv2.GaussianBlur(image, (5, 5), 0)
+
+    if need_edges:
+        image = cv2.Canny(image, 150, 250)
 
     return image
 
@@ -126,48 +129,47 @@ def predict_with_keypoint(image = None):
     production = False
     ##############################
 
-    image_directory = 'assets\\logos\\honda'
+    image_directory = 'chamfer'
     output_directory = 'keypoint_detection\\output_images'
 
 
 # pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/_chamfer_template.jpg'))
     #tökéletes kép
     pure_object = pureObject()
-    pure_image = preprocess_image(cv2.imread('assets/logos/apple/apple_pure.jpg'))
+    pure_image = preprocess_image(cv2.imread('assets/logos/apple/apple_pure.jpg'), False)
     pure_object.logos["apple"]["keypoints"], pure_object.logos["apple"]["descriptors"] = detect_keypoints(pure_image)
     pure_object.logos["apple"]["image"] = pure_image
 
-    pure_image = preprocess_image(cv2.imread('assets/logos/honda/honda_logo_main_for_chamfer.jpg'))
-    #pure_image = preprocess_image(cv2.imread('assets/logos/apple/apple_pure.jpg'))
+    pure_image = preprocess_image(cv2.imread('assets/logos/honda/honda_logo_main_for_chamfer.jpg'), False)
+    #pure_image = preprocess_image(cv2.imread('assets/logos/apple/apple_pure.jpg'), False)
     pure_object.logos["honda"]["keypoints"], pure_object.logos["honda"]["descriptors"] = detect_keypoints(pure_image)
     pure_object.logos["honda"]["image"] = pure_image
 
-    pure_image = preprocess_image(cv2.imread('assets/logos/nike/nike_logo_pure.jpg'))
+    pure_image = preprocess_image(cv2.imread('assets/logos/nike/nike_logo_pure.jpg'), False)
     pure_object.logos["nike"]["keypoints"], pure_object.logos["nike"]["descriptors"] = detect_keypoints(pure_image)
     pure_object.logos["nike"]["image"] = pure_image
 
-    #pure_image = preprocess_image(cv2.imread('assets/logos/peugeot/peugeot_logo_23.jpg'))
-    pure_image = preprocess_image(cv2.imread('assets/logos/nike/nike_logo_pure.jpg'))
+    pure_image = preprocess_image(cv2.imread('assets/logos/peugeot/peugeot_logo_23.jpg'), False)
+    #pure_image = preprocess_image(cv2.imread('assets/logos/nike/nike_logo_pure.jpg'), False)
     pure_object.logos["peugeot"]["keypoints"], pure_object.logos["peugeot"]["descriptors"] = detect_keypoints(pure_image)
     pure_object.logos["peugeot"]["image"] = pure_image
 
-
     pure_object_chamfer = pureObject()
-    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/apple_chamfer_template.png'))
+    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/apple_chamfer_template.png'), False)
     pure_object_chamfer.logos["apple"]["keypoints"], pure_object_chamfer.logos["apple"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["apple"]["image"] = pure_image
 
-    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/honda_chamfer_template.png'))
-    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/apple_chamfer_template.png'))
+    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/honda_chamfer_template.png'), False)
+    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/apple_chamfer_template.png'), False)
     pure_object_chamfer.logos["honda"]["keypoints"], pure_object_chamfer.logos["honda"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["honda"]["image"] = pure_image
 
-    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/nike_chamfer_template.png'))
+    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/nike_chamfer_template.png'), False)
     pure_object_chamfer.logos["nike"]["keypoints"], pure_object_chamfer.logos["nike"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["nike"]["image"] = pure_image
 
-    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/peugeot_chamfer_template.png'))
-    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/nike_chamfer_template.png'))
+    #pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/peugeot_chamfer_template.png'), False)
+    pure_image = preprocess_image(cv2.imread('assets/chamfer_templates/nike_chamfer_template.png'), False)
     pure_object_chamfer.logos["peugeot"]["keypoints"], pure_object_chamfer.logos["peugeot"]["descriptors"] = detect_keypoints(pure_image)
     pure_object_chamfer.logos["peugeot"]["image"] = pure_image
 
@@ -195,7 +197,7 @@ def predict_with_keypoint(image = None):
         for filename in os.listdir(image_directory):
             image_path = os.path.join(image_directory, filename)
             image = cv2.imread(image_path)
-            processed_image = preprocess_image(image)
+            processed_image = preprocess_image(image, True)
             if processed_image is not None:
                 keypoints, descriptors = detect_keypoints(processed_image)
                 for logo, data in pure_object.logos.items():
@@ -214,7 +216,7 @@ def predict_with_keypoint(image = None):
                         best_logo = logo
                  """
 
-                best_logo = get_best_matching_logo(pure_object_chamfer, pure_object_chamfer)
+                best_logo = get_best_matching_logo(pure_object_chamfer, pure_object)
 
 
                 matched_img = cv2.drawMatches(pure_object_chamfer.logos[best_logo]["image"], pure_object_chamfer.logos[best_logo]["keypoints"], processed_image, keypoints, pure_object_chamfer.logos[best_logo]["matches"][:50], None, flags=2)
