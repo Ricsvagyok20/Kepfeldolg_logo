@@ -61,6 +61,11 @@ def chamfer_match(template, learning_image):
     #Normalizálom a scoret, segített
     min_distance /= h * w
 
+    if best_location[0] >= 10 and best_location[1] >= 10:
+        x = best_location[0] - 10
+        y = best_location[1] - 10
+        best_location = (x, y)
+
     return min_distance, best_location
 
 def best_match_image(image, binary_image, binary_template):
@@ -82,6 +87,9 @@ def best_match_image(image, binary_image, binary_template):
 
     top_left = best_location
     h, w = best_template_size
+    if best_template_size[0] != 512 and best_template_size[1] != 512:
+        h += 20
+        w += 20
     bottom_right = (top_left[0] + w, top_left[1] + h)
 
     # Draw a rectangle or a circle around the detected region
@@ -102,10 +110,10 @@ def process_images(image_paths, template_path):
         image = resize_with_aspect_ratio(image, 512)
         binary_image = preprocess_chamfer(image)
 
-        cv.imshow("Chamfer template", binary_template)
-        cv.imshow("New image binary", binary_image)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        # cv.imshow("Chamfer template", binary_template)
+        # cv.imshow("New image binary", binary_image)
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
 
         image, matched_region = best_match_image(image, binary_image, binary_template)
 
@@ -113,10 +121,10 @@ def process_images(image_paths, template_path):
             continue
 
         # Display the result
-        cv.imshow("Best Match", image)
-        cv.imshow("Matched Region", matched_region)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        # cv.imshow("Best Match", image)
+        # cv.imshow("Matched Region", matched_region)
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
 
         processed_images.append(matched_region)
 
