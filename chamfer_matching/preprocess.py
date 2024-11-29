@@ -24,7 +24,7 @@ def preprocess_chamfer(image):
     gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
     # Éldetektálás
-    edges = cv.Canny(gray_image, 200, 400) # Lehet itt is akkor valami 200-300hoz hasonló mehetne
+    edges = cv.Canny(gray_image, 250, 400) # Lehet itt is akkor valami 200-300hoz hasonló mehetne
     # 250-600-al elég jó a 200-300 néhol segít, de a túl sok él is gondot okoz
     # 200-400 nem rossz, 200-300 se rossz
 
@@ -35,6 +35,7 @@ def preprocess_chamfer(image):
 
 def chamfer_match(template, learning_image):
     dist_transform = cv.distanceTransform(cv.bitwise_not(learning_image), cv.DIST_L2, 3)
+    # dist_transform = dist_transform.astype(np.float32)
 
     # Sliding window Chamfer matching
     h, w = template.shape
@@ -62,62 +63,64 @@ def chamfer_match(template, learning_image):
 
     return min_distance, best_location
 
+def best_match_image(image, binary_image, binary_template):
+    best_score = float('inf')
+    best_location = None
+    best_template_size = None
+
+    # Iterate over scaled templates
+    for scaled_template in generate_scaled_templates(binary_template):
+        score, location = chamfer_match(scaled_template, binary_image)
+        if score < best_score:
+            best_score = score
+            best_location = location
+            best_template_size = scaled_template.shape
+
+    # Draw a circle or bounding box around the best match on the original image
+    if best_template_size is None:
+        return None, None
+
+    top_left = best_location
+    h, w = best_template_size
+    bottom_right = (top_left[0] + w, top_left[1] + h)
+
+    # Draw a rectangle or a circle around the detected region
+    cv.rectangle(image, top_left, bottom_right, (0, 255, 0), 2)
+
+    matched_region = image[top_left[1]:top_left[1] + h, top_left[0]:top_left[0] + w]
+    return image, matched_region
 
 def process_images(image_paths, template_path):
     images = load_images(image_paths)
     processed_images = []
 
     binary_template = chamfer_template(template_path)
-    cv.imshow("Chamfer template", binary_template)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
 
     for image in images:
-        # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
 
+        # Skálázás képarányok megtartásával, hogy a logó eredeti formájában maradjon
         image = resize_with_aspect_ratio(image, 512)
         binary_image = preprocess_chamfer(image)
 
-        # cv.imshow("Chamfer template", binary_template)
-        # cv.imshow("New image binary", binary_image)
-        # cv.waitKey(0)
-        # cv.destroyAllWindows()
+        cv.imshow("Chamfer template", binary_template)
+        cv.imshow("New image binary", binary_image)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
-        best_score = float('inf')
-        best_location = None
-        best_template_size = None
+        image, matched_region = best_match_image(image, binary_image, binary_template)
 
-        # Iterate over scaled templates
-        for scaled_template in generate_scaled_templates(binary_template):
-            score, location = chamfer_match(scaled_template, binary_image)
-            if score < best_score:
-                best_score = score
-                best_location = location
-                best_template_size = scaled_template.shape
-
-        # Draw a circle or bounding box around the best match on the original image
-        top_left = best_location
-        h, w = best_template_size
-        bottom_right = (top_left[0] + w, top_left[1] + h)
-
-        # Draw a rectangle or a circle around the detected region
-        cv.rectangle(image, top_left, bottom_right, (0, 255, 0), 2)
-
-        # Optionally, crop the matched region
-        matched_region = image[top_left[1]:top_left[1] + h, top_left[0]:top_left[0] + w]
+        if image is None:
+            continue
 
         # Display the result
-        # cv.imshow("Best Match", image)
-        # cv.imshow("Matched Region", matched_region)
-        # cv.waitKey(0)
-        # cv.destroyAllWindows()
+        cv.imshow("Best Match", image)
+        cv.imshow("Matched Region", matched_region)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
         processed_images.append(matched_region)
 
-    # Determine the target shape based on the largest image in processed_images
-    max_height = max(img.shape[0] for img in processed_images)
-    max_width = max(img.shape[1] for img in processed_images)
-    target_shape = (max_height, max_width, 3)  # Assuming 3 channels (RGB)
+    target_shape = (512, 512, 3)  # Assuming 3 channels (RGB)
 
     # Pad all images to the target shape
     padded_images = [pad_image(img, target_shape) for img in processed_images]
