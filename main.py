@@ -24,29 +24,31 @@ processed_images = []
 images = []
 
 # Iterate through each logo path and its corresponding template
-# for logo_group in config.LOGO_PATHS_WITH_TEMPLATES:
-#     logo_paths = logo_group['logo_paths']
-#     image_paths.extend(logo_paths)
-#     template_path = logo_group['template_path']
-
-    # Process images for the current logo group
-    # group_processed_images, original_image_group = process_images(logo_paths, template_path)
-    # original_images = original_image_group
-    # processed_images.append(group_processed_images)
-
 for i in glob.glob('processed_images/*.jpg'):
     image_paths.append(i)
     image = cv.imread(i)
 
-    images.append(image)
+    original_images.append(image)
 
-original_images = images
-
-normalized_images = np.array(images)
+normalized_images = np.array(original_images)
 
 normalized_images = normalized_images / 255.0
 
 processed_images = np.concatenate(normalized_images, axis=0)
+
+counter = 0
+
+# for logo_group in config.LOGO_PATHS_WITH_TEMPLATES:
+#     logo_paths = logo_group['logo_paths']
+#     image_paths.extend(logo_paths)
+#     template_path = logo_group['template_path']
+#
+#     # Process images for the current logo group
+#     group_processed_images, images = process_images(logo_paths, template_path)
+#     for i in range(len(images)):
+#         filename = 'processed_images/processed_image_' + str(counter) + '.jpg'
+#         cv.imwrite(filename, images[i])
+#         counter += 1
 
 # Címkék generálása
 labels = []
@@ -102,7 +104,7 @@ loss, accuracy = train_model(model, X_train, y_train, X_test, y_test, epochs=20)
 print(f'Teszt veszteség: {loss}')
 print(f'Teszt pontosság: {accuracy}')
 
-label_dict = { 0: 'Honda', 1: 'Apple', 2: 'Nike', 3: 'Peugeot' }
+# label_dict = { 0: 'Honda', 1: 'Apple', 2: 'Nike', 3: 'Peugeot' }
 
 def turn_cv_img_to_gui(cv_image):
     cv_image_rgb = cv.cvtColor(cv_image, cv.COLOR_BGR2RGB)
