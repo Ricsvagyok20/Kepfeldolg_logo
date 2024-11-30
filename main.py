@@ -14,6 +14,8 @@ from chamfer_matching.cnn_model import build_model, train_model, predict_image
 from tensorflow.keras.utils import to_categorical
 from sklearn.utils import shuffle
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 from keypoint_detection.keypointDetection import predict_with_keypoint
 
@@ -74,6 +76,35 @@ label_dict = { 0: 'Honda', 1: 'Apple', 2: 'Nike', 3: 'Peugeot' }
 # keypoint_accuracy = keypoint_accuracy / len(original_images)
 # print(keypoint_accuracy)
 
+####################################
+#       keypoint diagarm
+####################################
+"""
+
+reverse_label_dict = {v: k for k, v in label_dict.items()}
+numeric_labels = np.array([reverse_label_dict[logo.capitalize()] for logo in labels_keypoint])
+
+cm = confusion_matrix(labels, numeric_labels)
+
+class_names = ["Apple", "Honda", "Nike", "Peugeot"]
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
+disp.plot(cmap=plt.cm.Blues)
+plt.savefig("Confusion_Matrix_Keypoint.png", dpi=300, bbox_inches='tight')
+
+
+class_accuracies = cm.diagonal() / cm.sum(axis=1)
+plt.bar(class_names, class_accuracies, color='skyblue')
+plt.title("Accuracy per Class")
+plt.xlabel("Class")
+plt.ylabel("Accuracy")
+plt.ylim(0, 1)
+plt.xticks(rotation=45)
+for i, acc in enumerate(class_accuracies):
+    plt.text(i, acc + 0.02, f"{acc:.2f}", ha='center')
+
+plt.savefig("Accuracy_per_Class_Keypoint.png", dpi=300, bbox_inches='tight')
+
+"""
 processed_images = processed_images.reshape(-1, 512, 512, 3)
 
 # Adatok és címkék összekeverése
