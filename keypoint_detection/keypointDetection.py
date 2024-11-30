@@ -169,9 +169,9 @@ def predict_with_keypoint(image = None):
                 data["match_result"], data["matches"] = match_against_pure( data["descriptors"], descriptors,data["keypoints"], keypoints)
            
             for logo, data in pure_object_chamfer.logos.items():
-                data["match_result"], data["matches"] = match_against_pure( data["descriptors"], descriptors_chamfer,data["keypoints"], keypoints_chamfer)    
+                data["match_result"], data["matches"] = match_against_pure( data["descriptors"], descriptors_chamfer,data["keypoints"], keypoints_chamfer)
 
-
+            best_logo = get_best_matching_logo(pure_object_chamfer, pure_object)
             matched_img = cv2.drawMatches(pure_object.logos[best_logo]["image"], pure_object.logos[best_logo]["keypoints"], processed_image, keypoints, pure_object.logos[best_logo]["matches"][:50], None, flags=2)
             return best_logo, matched_img
     else:

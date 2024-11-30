@@ -137,4 +137,4 @@ def process_images(image_paths, template_path):
 
     return_images = return_images / 255.0
 
-    return return_images
+    return return_images, padded_images

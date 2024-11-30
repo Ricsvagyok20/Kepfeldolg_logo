@@ -1,3 +1,5 @@
+import glob
+
 import config
 import numpy as np
 import tkinter as tk
@@ -17,19 +19,34 @@ from keypoint_detection.keypointDetection import predict_with_keypoint
 
 # Fő program
 image_paths = []
+original_images = []
 processed_images = []
+images = []
 
 # Iterate through each logo path and its corresponding template
-for logo_group in config.LOGO_PATHS_WITH_TEMPLATES:
-    logo_paths = logo_group['logo_paths']
-    image_paths.extend(logo_paths)
-    template_path = logo_group['template_path']
+# for logo_group in config.LOGO_PATHS_WITH_TEMPLATES:
+#     logo_paths = logo_group['logo_paths']
+#     image_paths.extend(logo_paths)
+#     template_path = logo_group['template_path']
 
     # Process images for the current logo group
-    group_processed_images = process_images(logo_paths, template_path)
-    processed_images.append(group_processed_images)
+    # group_processed_images, original_image_group = process_images(logo_paths, template_path)
+    # original_images = original_image_group
+    # processed_images.append(group_processed_images)
 
-processed_images = np.concatenate(processed_images, axis=0)
+for i in glob.glob('processed_images/*.jpg'):
+    image_paths.append(i)
+    image = cv.imread(i)
+
+    images.append(image)
+
+original_images = images
+
+normalized_images = np.array(images)
+
+normalized_images = normalized_images / 255.0
+
+processed_images = np.concatenate(normalized_images, axis=0)
 
 # Címkék generálása
 labels = []
@@ -38,7 +55,23 @@ for i, logo_group in enumerate(config.LOGO_PATHS_WITH_TEMPLATES):
     labels.extend([i] * len(logo_paths))
 
 labels = np.array(labels)
-processed_images = np.concatenate(processed_images, axis=0)
+
+label_dict = { 0: 'Honda', 1: 'Apple', 2: 'Nike', 3: 'Peugeot' }
+
+# Keypoint detection accuracy mérés
+# labels_keypoint = []
+# for image in original_images:
+#     prediction, image_2 = predict_with_keypoint(image)
+#     labels_keypoint.append(prediction)
+#
+# keypoint_accuracy = 0
+# print(len(labels), len(labels_keypoint))
+# for i, label in enumerate(labels):
+#     if label_dict[label].lower() == labels_keypoint[i]:
+#         keypoint_accuracy += 1
+# keypoint_accuracy = keypoint_accuracy / len(original_images)
+# print(keypoint_accuracy)
+
 processed_images = processed_images.reshape(-1, 512, 512, 3)
 
 # Adatok és címkék összekeverése
