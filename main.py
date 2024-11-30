@@ -90,7 +90,7 @@ class_names = ["Apple", "Honda", "Nike", "Peugeot"]
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
 disp.plot(cmap=plt.cm.Blues)
 plt.savefig("Confusion_Matrix_Keypoint.png", dpi=300, bbox_inches='tight')
-
+plt.clf()
 
 class_accuracies = cm.diagonal() / cm.sum(axis=1)
 plt.bar(class_names, class_accuracies, color='skyblue')
